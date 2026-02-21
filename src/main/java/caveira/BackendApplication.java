@@ -1,4 +1,4 @@
-package com.caveira.backend;
+package caveira;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
