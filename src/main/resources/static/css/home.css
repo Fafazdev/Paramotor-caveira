@@ -18,7 +18,7 @@
 :root {
 
   /* ── Primary accent colors ── */
-  --red:          #17e010;              /* Main red — highlights, hover effects, accents */
+  --red:          #e01010;              /* Main red — highlights, hover effects, accents */
   --red-dim:      #9a0b0b;              /* Darker red — reserved for future pressed/active states */
   --orange:       #ff6b00;              /* Orange accent — used exclusively in the team section */
 
