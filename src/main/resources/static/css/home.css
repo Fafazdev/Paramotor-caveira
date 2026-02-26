@@ -1,0 +1,687 @@
+/* ============================================================
+   FONT IMPORT
+   Loads three typefaces from Google Fonts in a single request:
+   - Bebas Neue  → all big titles and display/impact text
+   - Montserrat  → main body and UI font for the whole site
+   - Inter       → secondary body font used in the team section
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;700&family=Inter:wght@400;600&display=swap');
+
+
+
+
+/* ============================================================
+   CSS CUSTOM PROPERTIES  (design tokens / variables)
+   Central control panel for the entire color palette and fonts.
+   Change a value here and it updates everywhere it is used.
+   ============================================================ */
+:root {
+
+  /* ── Primary accent colors ── */
+  --red:          #e01010;              /* Main red — highlights, hover effects, accents */
+  --red-dim:      #9a0b0b;              /* Darker red — reserved for future pressed/active states */
+  --orange:       #ff6b00;              /* Orange accent — used exclusively in the team section */
+
+  /* ── Neutral / text colors ── */
+  --white:        #ffffff;              /* Primary text and icon color */
+  --gray:         #aaaaaa;              /* Secondary / muted text color */
+
+  /* ── Background shades (darkest → slightly lighter) ── */
+  --bg-dark:      #0d0d0d;              /* Darkest bg — odd sections (história, expedições) */
+  --bg-mid:       #141414;              /* Mid-dark bg — even sections (equipe, produtos) */
+  --bg-card:      #1c1c1c;              /* Carousel card background */
+  --bg-team-card: #1a1a1a;              /* Team member card background */
+
+  /* ── Utility ── */
+  --border: rgba(255,255,255,0.06);     /* Very subtle white border for separators and card edges */
+
+  /* ── Typography ── */
+  --font-body: 'Inter', sans-serif;     /* Used in the team section for subtitles and roles */
+}
+
+
+
+
+/* ============================================================
+   GLOBAL RESET
+   Removes all default browser margin/padding and switches
+   every element to border-box sizing so padding never
+   accidentally expands element widths.
+   ============================================================ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Base HTML & Body ──
+   - overflow-x: hidden prevents horizontal scrollbars from
+     overflowing elements like the carousel track
+   - Sets the default font, background and text color sitewide */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  font-family: 'Montserrat', sans-serif;
+  background: var(--bg-dark);
+  color: var(--white);
+}
+
+
+
+
+/* ============================================================
+   NAVIGATION BAR
+   Fixed to the top of the viewport so it stays visible while
+   scrolling. Starts transparent (floating over the hero video)
+   and gains a frosted-glass dark background once the JS class
+   "scrolled" is added when the user scrolls down.
+   ============================================================ */
+
+/* ── Base nav — transparent, right-aligned, floats above hero ── */
+nav {
+  position: fixed;                      /* Sticks to top of the screen at all times */
+  top: 0; left: 0;
+  width: 100%;
+  z-index: 100;                         /* Above all other page content */
+  display: flex;
+  justify-content: flex-end;            /* Links aligned to the right side */
+  align-items: center;
+  padding: 28px 60px;                   /* Tall padding = taller nav bar before scroll */
+  transition: background 0.4s ease, padding 0.3s ease; /* Smooth collapse on scroll */
+}
+
+/* ── Scrolled state — class added via JS when user scrolls down ──
+   Shrinks padding for a compact nav and reveals a blurred dark background */
+nav.scrolled {
+  padding: 18px 60px;                   /* Reduced padding = thinner bar */
+  background: rgba(0,0,0,0.82);         /* Semi-transparent black */
+  backdrop-filter: blur(12px);          /* Frosted-glass blur on content behind the nav */
+  border-bottom: 1px solid var(--border); /* Thin separator line at the bottom */
+}
+
+/* ── Navigation link list ──
+   Horizontal flex row; list-style removes bullet points */
+.nav-links {
+  display: flex;
+  gap: 48px;
+  list-style: none;
+}
+
+/* ── Individual nav links ──
+   Small, bold, uppercase — sports / editorial style.
+   color: #000 so links are visible over the bright hero video before scrolling. */
+.nav-links a {
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #000;                          /* Black at page-top (readable over bright video) */
+  text-decoration: none;
+  position: relative;                   /* Needed to anchor the ::after underline pseudo-element */
+  transition: color 0.35s ease;
+}
+
+/* ── Links turn white once the nav gets its dark background on scroll ── */
+nav.scrolled .nav-links a {
+  color: var(--white);
+}
+
+/* ── Animated red underline ──
+   A pseudo-element that starts at width 0 and expands to 100%
+   on hover, creating a slide-in underline reveal effect */
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -4px;               /* Positioned just below the link text */
+  width: 0; height: 2px;               /* Zero width = invisible by default */
+  background: var(--red);
+  transition: width 0.3s ease;         /* Animates the expansion on hover */
+}
+
+/* ── Hover states — link turns red and underline slides in ── */
+.nav-links a:hover { color: var(--red); }
+.nav-links a:hover::after { width: 100%; }
+
+
+
+
+/* ============================================================
+   HERO SECTION
+   Full-screen opening section built with four stacked layers.
+   Each layer uses position:absolute + inset:0 to fill the hero,
+   then z-index controls the render order (bottom → top):
+
+     z-index 0 — .hero-video    (the background video)
+     z-index 1 — .hero-overlay  (gradient to darken the video)
+     z-index 2 — .hero-clouds   (cloud image for atmospheric depth)
+     z-index 3 — .hero-content  (logo, tagline, scroll arrows)
+   ============================================================ */
+
+/* ── Outer hero container — full viewport height, clips overflow ── */
+.hero {
+  position: relative;                   /* Establishes the stacking context for all child layers */
+  width: 100%;
+  height: 100vh;                        /* Always exactly the height of the visible screen */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;                     /* Clips the video so it never bleeds outside the hero */
+  text-align: center;
+}
+
+/* ── Background video — z-index 0 (bottom layer) ──
+   Fills the hero entirely; object-fit:cover crops it to fit
+   without letterboxing or distortion */
+.hero-video {
+  position: absolute;
+  inset: 0;                             /* Shorthand for top:0; right:0; bottom:0; left:0 */
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* ── Darkening gradient overlay — z-index 1 ──
+   Transparent at the top so the sky looks natural, and heavily
+   darkened at the bottom to blend smoothly into the next section */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.20) 0%,              /* Nearly transparent at the top */
+    rgba(0,0,0,0.30) 55%,             /* Slight darkening in the middle */
+    rgba(0,0,0,0.72) 100%             /* Heavy dark at the bottom edge */
+  );
+  z-index: 1;
+}
+
+/* ── Cloud image layer — z-index 2 ──
+   A PNG/WebP cloud texture over the video for extra atmosphere.
+   pointer-events:none makes sure it never intercepts clicks. */
+.hero-clouds {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  pointer-events: none;               /* Invisible to mouse and touch events */
+  opacity: 0.85;
+}
+
+/* ── Foreground content wrapper — z-index 3 (top layer) ──
+   Holds the logo, tagline and scroll arrows.
+   The fadeInUp animation slides everything up on page load. */
+.hero-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  animation: fadeInUp 1.2s ease both;
+}
+
+/* ── Hero logo image ──
+   clamp() makes the size responsive:
+   min 160px → scales with viewport (22vw) → max 280px.
+   The logoPop animation scales it in from 70% on load. */
+.hero-logo {
+  width: clamp(160px, 22vw, 280px);
+  filter: drop-shadow(0 0 32px rgba(0,0,0,0.75)); /* Dark glow adds depth over the video */
+  animation: logoPop 1s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both; /* 0.3s delay = appears after page settles */
+}
+
+/* ── Hero tagline / slogan text ──
+   Bebas Neue for visual impact. Delayed 0.6s so it appears
+   after the logo has already popped in. */
+.hero-tagline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.6rem, 4vw, 3rem); /* Responsive size: min 1.6rem → 4vw → max 3rem */
+  letter-spacing: 0.1em;
+  color: var(--white);
+  text-shadow: 0 2px 24px rgba(0,0,0,0.9); /* Ensures legibility over any video frame */
+  animation: fadeInUp 1s ease 0.6s both;
+}
+
+/* ── Scroll-down arrow indicator ──
+   Three stacked chevron shapes at the bottom center of the hero.
+   They animate with cascading delays to suggest scrolling down. */
+.scroll-arrow {
+  position: absolute;
+  bottom: 36px; left: 50%;
+  transform: translateX(-50%);         /* Horizontally centered */
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+/* ── Each chevron / arrow shape ──
+   A rotated square with two visible borders = classic CSS chevron trick.
+   Starts invisible; the arrowBounce animation pulses it in and out. */
+.scroll-arrow span {
+  display: block;
+  width: 22px; height: 22px;
+  border-right: 3px solid var(--white);
+  border-bottom: 3px solid var(--white);
+  transform: rotate(45deg);            /* Rotates the square into a downward-pointing chevron */
+  animation: arrowBounce 1.4s ease-in-out infinite;
+  opacity: 0;                          /* Hidden by default — animation controls visibility */
+}
+
+/* ── Staggered delays create a cascading bounce-wave effect ── */
+.scroll-arrow span:nth-child(1) { animation-delay: 0s; }
+.scroll-arrow span:nth-child(2) { animation-delay: 0.2s; }
+.scroll-arrow span:nth-child(3) { animation-delay: 0.4s; }
+
+
+
+
+/* ============================================================
+   CAROUSEL SECTION
+   An auto-scrolling horizontal strip of cards placed between
+   the hero and the main content sections. The track contains
+   two identical sets of cards side-by-side; the animation
+   shifts it left by exactly 50% of its total width, which
+   loops it back to the visual start — creating a seamless
+   infinite loop. The left and right edges are faded out with
+   a gradient pseudo-element to hide the loop seam.
+   ============================================================ */
+
+/* ── Outer carousel wrapper ──
+   Mid-tone background separates it visually from the hero.
+   position:relative is required for the ::after pseudo-element. */
+#carousel {
+  background: var(--bg-mid);
+  padding: 48px 0;
+  margin-top: 80px;                    /* Visual breathing room below the hero */
+  position: relative;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;                    /* Clips cards that scroll outside the bounds */
+}
+
+/* ── Fade mask on left and right edges ──
+   A full-size pseudo-element with opaque edges that match the
+   background — hides cards as they enter/exit, making the
+   loop look seamless. pointer-events:none lets hover work on cards. */
+#carousel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    var(--bg-mid) 0%,                 /* Solid left edge — hides incoming cards */
+    transparent 8%,                   /* Fades to transparent */
+    transparent 92%,                  /* Visible center */
+    var(--bg-mid) 100%                /* Solid right edge — hides outgoing cards */
+  );
+  pointer-events: none;               /* Cards underneath remain hoverable */
+  z-index: 2;                         /* Sits above .card elements */
+}
+
+/* ── Inner container clips the scrolling track ── */
+.carousel-container { overflow: hidden; }
+
+/* ── The moving track ──
+   width: max-content grows as wide as all cards combined.
+   The scroll @keyframe continuously moves it leftward. */
+.carousel-track {
+  display: flex;
+  width: max-content;
+  animation: scroll 35s linear infinite; /* Constant, non-eased scroll */
+}
+
+/* ── Individual carousel card ──
+   Fixed dimensions, dark background with a subtle border.
+   position:relative anchors the ::before decorative glow. */
+.card {
+  flex: 0 0 auto;                      /* Prevents flex from shrinking or stretching cards */
+  width: 250px;
+  height: 350px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin: 0 12px;                      /* Horizontal gap between each card */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  color: var(--gray);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s;
+}
+
+/* ── Faint red diagonal glow in the top-left corner of each card ──
+   Very low-opacity (6%) — adds brand warmth without being distracting */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(224,16,16,0.06) 0%, transparent 60%);
+}
+
+/* ── Card hover — lifts slightly and red border becomes visible ── */
+.card:hover {
+  border-color: rgba(224,16,16,0.4);
+  transform: translateY(-4px);
+  color: var(--white);
+}
+
+
+
+
+/* ============================================================
+   GENERAL CONTENT SECTIONS
+   Shared base styles applied to all main page sections:
+   #historia, #equipe, #proximas-expedicoes, #produtos.
+   Individual section backgrounds alternate between --bg-dark
+   and --bg-mid to create visual rhythm while scrolling.
+   ============================================================ */
+
+/* ── Base section layout ──
+   Full-height flex container, content vertically and horizontally centered */
+.section {
+  position: relative;                  /* For the ::after accent bar and .section-number */
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 60px;                 /* Generous padding so content never touches edges */
+  overflow: hidden;                    /* Prevents the huge .section-number from causing scroll */
+}
+
+/* ── Alternating backgrounds ──
+   Odd sections darker, even sections slightly lighter —
+   provides visual separation without hard lines between sections */
+#historia            { background: var(--bg-dark); }
+#equipe              { background: var(--bg-mid); }
+#proximas-expedicoes { background: var(--bg-dark); }
+#produtos            { background: var(--bg-mid); }
+
+/* ── Small red accent bar at the top-left corner of every section ──
+   A 64×3px strip — acts as a visual "tab" that reinforces the red brand color
+   and gives each section a clear starting point on scroll */
+.section::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 64px; height: 3px;
+  background: var(--red);
+}
+
+/* ── Content wrapper inside each section ──
+   Caps the readable text width and sits above the decorative
+   background number via z-index */
+.section-inner {
+  position: relative;
+  z-index: 1;                          /* Above .section-number (z-index: 0) */
+  max-width: 800px;
+}
+
+/* ── Section heading (h2) ──
+   Large Bebas Neue display font that scales fluidly with viewport.
+   clamp() = never smaller than 2.4rem, never bigger than 5rem. */
+.section h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  letter-spacing: 0.08em;
+  line-height: 0.95;                   /* Tight leading — looks intentional for display text */
+  color: var(--white);
+  margin-bottom: 24px;
+}
+
+/* ── Red highlight inside a heading ──
+   Wrap any word in <span> inside an h2 to color it red.
+   Example: <h2>NOSSA <span>HISTÓRIA</span></h2> */
+.section h2 span {
+  color: var(--red);
+}
+
+/* ── Section body paragraph text ──
+   Relaxed line-height for comfortable reading; muted gray
+   keeps the white headings as the visual priority */
+.section p {
+  font-size: 0.95rem;
+  line-height: 1.85;
+  color: var(--gray);
+  max-width: 600px;
+}
+
+/* ── Decorative oversized background number ──
+   An enormous section number (e.g. "01") anchored to the right
+   side of the section. Nearly invisible at 2.5% opacity — purely
+   editorial decoration that adds depth without competing with content. */
+.section-number {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);         /* Perfectly vertically centered in the section */
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(8rem, 18vw, 18rem); /* Huge and responsive */
+  color: rgba(255,255,255,0.025);      /* Almost invisible — 2.5% white */
+  line-height: 1;
+  pointer-events: none;               /* Cannot be clicked or text-selected */
+  user-select: none;
+  z-index: 0;                         /* Behind .section-inner */
+}
+
+
+
+
+/* ============================================================
+   TEAM SECTION  (#equipe)
+   Grid of member cards with photo, hover overlay, social icons,
+   name and role. Uses --orange as the accent color instead of
+   --red to give this section its own distinct visual identity.
+   ============================================================ */
+
+/* ── Outer wrapper — vertical padding only, width from parent ── */
+.team-section {
+  padding: 80px 0;
+}
+
+/* ── Header block above the card grid ── */
+.team-header {
+  margin-bottom: 60px;
+}
+
+/* ── Section title ── */
+.team-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3rem;
+  letter-spacing: 3px;
+  color: var(--white);
+  text-transform: uppercase;
+}
+
+/* ── Subtitle beneath the title ──
+   Uses Inter for a softer, lighter feel than Montserrat */
+.team-subtitle {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--gray);
+  margin-top: -8px;                    /* Pulls it visually closer to the title */
+  letter-spacing: 1px;
+}
+
+/* ── Short orange horizontal rule below the title ──
+   Centered decorative divider line; uses --orange to reinforce
+   this section's distinct accent color */
+.title-divider {
+  width: 60px;
+  height: 3px;
+  background-color: var(--orange);
+  margin: 16px auto 0;                 /* auto left/right = centered */
+  border-radius: 2px;
+}
+
+/* ── Team member card ──
+   Dark rounded container. overflow:hidden is essential — it
+   clips the image zoom effect to the card's rounded corners.
+   On hover: lifts up + orange glow shadow appears underneath. */
+.team-card {
+  background-color: var(--bg-team-card);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(255, 107, 0, 0.25); /* Warm orange glow */
+}
+
+/* ── Square image container ──
+   aspect-ratio: 1/1 forces a perfect square regardless of
+   the original image dimensions. The image is cropped to fit. */
+.team-img-wrapper {
+  position: relative;                  /* Allows .team-overlay to be positioned on top */
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+}
+
+/* ── The member photo ──
+   Fills the square container and zooms in subtly on card hover */
+.team-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;                   /* Crop-fills without stretching the image */
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+/* ── Subtle zoom effect when the card is hovered ── */
+.team-card:hover .team-img {
+  transform: scale(1.05);
+}
+
+/* ── Dark overlay that reveals social icons on hover ──
+   Covers the full image wrapper. Starts invisible (opacity:0)
+   and smoothly fades to semi-black when the card is hovered. */
+.team-overlay {
+  position: absolute;                  /* Stacked on top of the image */
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);    /* 65% black = dark but the zoomed image stays visible */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;                          /* Fully hidden by default */
+  transition: opacity 0.3s ease;
+}
+
+/* ── Overlay fades in when card is hovered ── */
+.team-card:hover .team-overlay {
+  opacity: 1;
+}
+
+/* ── Social media icon row inside the overlay ── */
+.team-social {
+  display: flex;
+  gap: 16px;
+}
+
+/* ── Individual social icon button ──
+   Circular orange button with a white icon inside.
+   On its own hover: inverts to white button / orange icon and scales up. */
+.social-link {
+  color: #ffffff;
+  background-color: var(--orange);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;                  /* Circle shape */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.social-link:hover {
+  background-color: #ffffff;
+  color: var(--orange);                /* Colors invert on hover */
+  transform: scale(1.15);
+}
+
+/* ── Text info block below the photo ──
+   Centered name and role with comfortable inner padding */
+.team-info {
+  padding: 18px 16px;
+  text-align: center;
+}
+
+/* ── Member name ──
+   Display font with wide letter-spacing — consistent with section headings */
+.member-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+/* ── Member role / job title ──
+   Small, uppercase, orange — visually distinct from the name
+   without competing with it for attention */
+.member-role {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+
+
+
+/* ============================================================
+   KEYFRAME ANIMATIONS
+   All @keyframes are grouped here at the bottom so they are
+   easy to find and adjust without hunting through component styles.
+   ============================================================ */
+
+/* ── fadeInUp ──
+   Fades an element in while it moves 30px upward.
+   Used by: .hero-content (immediately), .hero-tagline (0.6s delay) */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── logoPop ──
+   Scales the hero logo from 70% → 100% as it fades in.
+   The cubic-bezier easing gives a satisfying elastic "pop".
+   Used by: .hero-logo (0.3s delay) */
+@keyframes logoPop {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── arrowBounce ──
+   Fades a chevron in then out while translating it diagonally,
+   simulating a downward bounce movement.
+   Three .scroll-arrow spans run this with staggered delays (0s, 0.2s, 0.4s)
+   creating a cascading wave effect. */
+@keyframes arrowBounce {
+  0%   { opacity: 0; transform: rotate(45deg) translate(-6px, -6px); } /* Invisible, offset up-left */
+  50%  { opacity: 1; }                                                   /* Fully visible at midpoint */
+  100% { opacity: 0; transform: rotate(45deg) translate(6px,  6px); }  /* Invisible, offset down-right */
+}
+
+/* ── scroll ──
+   Translates the carousel track left by exactly 50% of its width.
+   The track is built with two identical sets of cards (total = 200% of one set),
+   so -50% brings it back to the visual start — a seamless infinite loop.
+   Used by: .carousel-track (35s, constant linear pace) */
+@keyframes scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
